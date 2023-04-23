@@ -75,6 +75,12 @@ if __name__ == "__main__":
 			number_of_images_ball_visible +=1
 
 
+	# Parameters
+	ball_radius_should_be_larger_than = 10
+	if_previously_this_close_to_bar_now_underneath = 20
+	margin_of_error_pixels = 5
+
+
 	# construct the argument parse and parse the arguments
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-v", "--video",
@@ -173,7 +179,7 @@ if __name__ == "__main__":
 			center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
 			# only proceed if the radius meets a minimum size
-			if radius > 10:
+			if radius > ball_radius_should_be_larger_than:
 				# cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2) # draw the circle and centroid on the frame,
 				cv2.circle(frame, center, 3, (255, 0, 0), -1)  # then update the list of tracked points
 		else:
@@ -184,7 +190,7 @@ if __name__ == "__main__":
 				curLine = [pts[0], pts[2]]
 				for line in lines:
 					dist = distance_points_line(line[0], line[1], pts[0])
-					if dist < 20:
+					if dist < if_previously_this_close_to_bar_now_underneath:
 						pointRight = (pts[0][0] + dist, pts[0][1])
 						pointLeft = (pts[0][0] - dist, pts[0][1])
 						if distance_points_line(line[0], line[1], pointLeft) < distance_points_line(line[0], line[1],
@@ -242,7 +248,7 @@ if __name__ == "__main__":
 		if trueLocations[count] is not None:
 			if center is None:
 				number_of_ball_lost += 1
-			elif math.dist(center, trueLocations[count]) < 5:
+			elif math.dist(center, trueLocations[count]) < margin_of_error_pixels:
 				number_of_correct_positions += 1
 			else:
 				number_of_wrong_positions += 1
