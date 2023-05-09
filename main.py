@@ -76,7 +76,7 @@ if __name__ == "__main__":
 
 
 	# Parameters
-	ball_radius_should_be_larger_than = 10
+	ball_radius_should_be_larger_than = 1
 	if_previously_this_close_to_bar_now_underneath = 20
 	margin_of_error_pixels = 5
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-v", "--video",
 					help="path to the (optional) video file")
-	ap.add_argument("-b", "--buffer", type=int, default=64,
+	ap.add_argument("-b", "--buffer", type=int, default=16,
 					help="max buffer size")
 	args = vars(ap.parse_args())
 
@@ -128,6 +128,9 @@ if __name__ == "__main__":
 		# grab the current frame
 		frame = vs.read()
 
+		if count == 39:
+			a = "fdfd"
+
 		# handle the frame from VideoCapture or VideoStream
 		frame = frame[1] if args.get("video", False) else frame
 
@@ -168,6 +171,7 @@ if __name__ == "__main__":
 			thickness = int(np.sqrt(args["buffer"] / float(i + 10)) * 2.5)
 			cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
 
+		predict_location = False
 		# only proceed if at least one contour was found
 		if len(cnts) > 0:
 			# find the largest contour in the mask, then use
@@ -176,13 +180,18 @@ if __name__ == "__main__":
 			c = max(cnts, key=cv2.contourArea)
 			((x, y), radius) = cv2.minEnclosingCircle(c)
 			M = cv2.moments(c)
-			center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+			possible_center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
 			# only proceed if the radius meets a minimum size
 			if radius > ball_radius_should_be_larger_than:
 				# cv2.circle(frame, (int(x), int(y)), int(radius),(0, 255, 255), 2) # draw the circle and centroid on the frame,
-				cv2.circle(frame, center, 3, (255, 0, 0), -1)  # then update the list of tracked points
+				cv2.circle(frame, possible_center, 3, (255, 0, 0), -1)  # then update the list of tracked points
+				center = possible_center
+			else:
+				predict_location = True
 		else:
+			predict_location = True
+		if predict_location:
 			if len(pts) >= 3 and not pts[0] is None and not pts[1] is None and not pts[2] is None:
 				nearestIntersect = 0
 				nearestIntersectSet = False
@@ -229,7 +238,7 @@ if __name__ == "__main__":
 
 		name = "generated_images/frame%d.jpg" % count
 		# Uncomment this to save the frames
-		#cv2.imwrite(name, frame)  # save frame as JPEG file
+		cv2.imwrite(name, frame)  # save frame as JPEG file
 
 		key = cv2.waitKey(1) & 0xFF
 
